@@ -1,84 +1,68 @@
+def decrypt_blocks_from_file(filename):
+    with open(filename, 'r') as file:
+        input_data = file.read()
+    return decrypt_blocks(input_data)
+
+
 def decrypt_blocks(input_data):
-    # Известный открытый текст
     known_plain_text = "the quick brown fox jumps over the lazy dog"
 
-    # Функция для получения возможного соответствия
     def find_mapping(encrypted_line):
+        encrypted_words = encrypted_line.split()
+        known_words = known_plain_text.split()
+
+        if len(encrypted_words) != len(known_words):
+            return None
+
         mapping = {}
-        reverse_mapping = {}
-        words = encrypted_line.split()
-
-        # Проверяем каждую строку
-        for known_word in known_plain_text.split():
-            if not words:
+        for enc_word, known_word in zip(encrypted_words, known_words):
+            if len(enc_word) != len(known_word):
                 return None
-            encrypted_word = words.pop(0)
+            for enc_char, known_char in zip(enc_word, known_word):
+                if enc_char not in mapping:
+                    mapping[enc_char] = known_char
+                elif mapping[enc_char] != known_char:
+                    return None
 
-            if len(encrypted_word) != len(known_word):
-                return None
-
-            for e_char, k_char in zip(encrypted_word, known_word):
-                if e_char in mapping:
-                    if mapping[e_char] != k_char:
-                        return None
-                else:
-                    mapping[e_char] = k_char
-
-                if k_char in reverse_mapping:
-                    if reverse_mapping[k_char] != e_char:
-                        return None
-                else:
-                    reverse_mapping[k_char] = e_char
+        if len(set(mapping.values())) != len(mapping):
+            return None
 
         return mapping
 
-    # Функция для расшифровки строки
     def decrypt_line(line, mapping):
-        decrypted = []
-        for char in line:
-            if char in mapping:
-                decrypted.append(mapping[char])
-            else:
-                decrypted.append(char)  # пробелы остаются без изменений
-        return ''.join(decrypted)
+        table = str.maketrans(mapping)
+        return line.translate(table)
 
-    # Обработка входных данных
     blocks = input_data.strip().split('\n\n')
     results = []
 
     for block in blocks:
-        lines = block.strip().split('\n')[1:]  # Игнорируем первую строку
-        if len(lines) > 100:  # Ограничение на количество строк
-            results.append("No solution")
+        lines = block.strip().split('\n')
+        block_id = lines[0]
+        encrypted_lines = lines[1:]
+
+        if len(encrypted_lines) > 100 or any(len(line) > 80 for line in encrypted_lines) or \
+           any(not line.isascii() or not line.islower() or not all(c.isalpha() or c.isspace() for c in line) for line in
+               encrypted_lines):
+            results.append(f"{block_id}\nNo solution")
             continue
 
-        found_solution = False
-
-        for line in lines:
-            # Проверка на допустимые символы и длину строки
-            if any(c not in "abcdefghijklmnopqrstuvwxyz " for c in line) or len(line) > 80:
-                results.append("No solution")
-                found_solution = True
-                break
-
+        found_mapping = None
+        for line in encrypted_lines:
             mapping = find_mapping(line)
             if mapping:
-                found_solution = True
-                decrypted_lines = [decrypt_line(l, mapping) for l in lines]
-                results.append('\n'.join(decrypted_lines))
+                found_mapping = mapping
                 break
 
-        if not found_solution:
-            results.append("No solution")
+        if found_mapping:
+            decrypted_lines = [decrypt_line(line, found_mapping) for line in encrypted_lines]
+            results.append(f"{block_id}\n" + '\n'.join(decrypted_lines))
+        else:
+            results.append(f"{block_id}\nNo solution")
 
     return '\n\n'.join(results)
 
-
-# Пример использования
-input_data = """1
-vtz ud xnm xugm itr pyy jttk gmv xt otgm xt xnm puk ti xnm fprxq
-xnm ceoub lrtzv ita hegfd tsmr xnm ypwq ktj
-frtjrpgguvj otvxmdxd prm iev prmvx xnmq"""
-
-output = decrypt_blocks(input_data)
-print(output)
+if __name__ == '__main__':
+    filename = 'input_decoder.txt' # Или укажите другой файл
+    output = decrypt_blocks_from_file(filename)
+    print(output)
