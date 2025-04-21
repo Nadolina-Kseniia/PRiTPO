@@ -52,7 +52,7 @@ def main():
 
     for _ in range(num_cases):
         case = []
-        index += 1  # Skip the blank line
+        #index += 1  # Skip the blank line
         while index < len(data) and data[index].strip():
             case.append(data[index].strip())
             index += 1

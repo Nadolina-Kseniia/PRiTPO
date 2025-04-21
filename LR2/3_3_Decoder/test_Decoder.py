@@ -1,45 +1,63 @@
 # test_Decoder.py
 
+import pytest
 from Decoder import decrypt_texts
 
-def run_tests():
+def test_decrypt_texts():
     test_cases = [
-        # Тест 1: Простой случай
-        [
-            ["gsv jfrxp ybgsrh"],
-            ["nfyb qnweql"]
-        ],
-        # Тест 2: Похожая структура
-        [
-            ["odg ql jfw irexg frtzo"],
-            ["sbw xm nq"]
-        ],
-        # Тест 3: Сложный случай
-        [
-            ["lyb gvcob gsxi ghupr"],
-            ["nq mv",
-             "qs"
+        {
+            "input": [
+                "gsv jfrxp ybgsrh",
+                "nfyb qnweql"
+            ],
+            "expected": [
+                "the quick brown",
+                "fox jumps",
             ]
-        ],
-        # Тест 4: Нет решения
-        [
-            ["xyz abc"],
-            ["agh bcd"]
-        ],
-        # Тест 5: Полное соответствие
-        [
-            ["the quick brown fox"],
-            ["jumps over the lazy dog"]
-        ],
+        },
+        {
+            "input": [
+                "gsv xlwv rm",
+                "nfgzi"
+            ],
+            "expected": [
+                "the lazy dog",
+                "quick",
+            ]
+        },
+        {
+            "input": [
+                "zyxwvutsrqponmlkjihgfedcba",
+                "abcdefghijklmno"
+            ],
+            "expected": [
+                "the quick brown fox jumps",
+                "over the lazy dog"
+            ]
+        },
+        {
+            "input": [
+                "abcdefgh",
+                "ijklmnop",
+                "qrstuvwxyz"
+            ],
+            "expected": [
+                "No solution."
+            ]
+        },
+        {
+            "input": [
+                "the quick brown fox jumps over the lazy dog"
+            ],
+            "expected": [
+                "the quick brown fox jumps over the lazy dog"
+            ]
+        }
     ]
 
-    for i, test_case in enumerate(test_cases, 1):
-        print(f"Test Case {i}:")
-        results = decrypt_texts(test_case)  # Используем функцию из Decoder.py
-        for line in results:
-            print(line)
-        print()  # Пустая строка между тестами
-
+    for test in test_cases:
+        result = decrypt_texts([test["input"]])
+        assert result[0] == test["expected"], f"Test failed for input: {test['input']}"
 
 if __name__ == "__main__":
-    run_tests()
+    pytest.main()
