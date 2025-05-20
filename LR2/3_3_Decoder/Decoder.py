@@ -1,116 +1,80 @@
 def decrypt_texts(cases):
-    # Известный открытый текст и его структура
-    plain_text = "the quick brown fox jumps over the lazy dog"
-    plain_words = plain_text.split()
-    plain_lengths = [len(word) for word in plain_words]
+    known_words = set("the quick brown fox jumps over the lazy dog".split())
+    known_by_length = {}
+    for word in known_words:
+        known_by_length.setdefault(len(word), []).append(word)
 
     results = []
 
     for current_case in cases:
-        solution_found = False
-        decryption_map = {}
-
-        # Шаг 1: Найти, какая строка в current_case является шифровкой plain_text
+        cipher_words = []
         for line in current_case:
-            words = line.split()
-            if len(words) != len(plain_words):
-                continue
+            cipher_words.extend(line.split())
 
-            # Проверить длины слов
-            valid_length = True
-            for w, pl in zip(words, plain_lengths):
-                if len(w) != pl:
-                    valid_length = False
-                    break
-            if not valid_length:
-                continue
+        # Попытка найти маппинг через перебор
+        mapping = {}
+        used_plain_letters = set()
+        used_cipher_letters = set()
 
-            # Попробовать построить отображение
-            temp_decryption = {}
-            temp_encryption = {}
-            valid_mapping = True
+        def backtrack(i, temp_map, used_plain):
+            if i == len(cipher_words):
+                return temp_map
 
-            for cipher_word, plain_word in zip(words, plain_words):
-                if len(cipher_word) != len(plain_word):
-                    valid_mapping = False
-                    break
-                for c_char, p_char in zip(cipher_word, plain_word):
-                    if c_char in temp_decryption:
-                        if temp_decryption[c_char] != p_char:
-                            valid_mapping = False
+            cipher_word = cipher_words[i]
+            length = len(cipher_word)
+
+            for plain_word in known_by_length.get(length, []):
+                if plain_word in used_plain:
+                    continue
+
+                temp = {}
+                valid = True
+                for c, p in zip(cipher_word, plain_word):
+                    if c in temp_map:
+                        if temp_map[c] != p:
+                            valid = False
                             break
                     else:
-                        if p_char in temp_encryption:
-                            if temp_encryption[p_char] != c_char:
-                                valid_mapping = False
-                                break
-                        else:
-                            temp_decryption[c_char] = p_char
-                            temp_encryption[p_char] = c_char
-                if not valid_mapping:
-                    break
+                        if p in used_plain_letters:
+                            valid = False
+                            break
+                        temp[c] = p
 
-            if valid_mapping:
-                decryption_map = temp_decryption
-                solution_found = True
-                break
+                if valid:
+                    for c, p in zip(cipher_word, plain_word):
+                        temp_map[c] = p
+                        used_plain_letters.add(p)
+                        used_cipher_letters.add(c)
+                    used_plain.add(plain_word)
+                    result = backtrack(i + 1, temp_map, used_plain)
+                    if result:
+                        return result
+                    used_plain.remove(plain_word)
+                    for c in cipher_word:
+                        p = temp_map.pop(c)
+                        used_plain_letters.remove(p)
+                        used_cipher_letters.remove(c)
+            return None
 
-        # Шаг 2: Расшифровать все строки
-        if solution_found:
-            decrypted_case = []
-            for line in current_case:
-                decrypted_line = []
-                for char in line:
-                    if char == ' ':
-                        decrypted_line.append(' ')
-                    elif char in decryption_map:
-                        decrypted_line.append(decryption_map[char])
-                    else:
-                        decrypted_case = ["No solution."]
-                        solution_found = False
-                        break
-                if not solution_found:
-                    break
-                decrypted_case.append(''.join(decrypted_line))
-            if solution_found:
-                results.append(decrypted_case)
-            else:
-                results.append(["No solution."])
-        else:
+        mapping = backtrack(0, {}, set())
+        if not mapping:
             results.append(["No solution."])
+            continue
+
+        decrypted_case = []
+        for line in current_case:
+            decrypted_line = []
+            for char in line:
+                if char == ' ':
+                    decrypted_line.append(' ')
+                elif char in mapping:
+                    decrypted_line.append(mapping[char])
+                else:
+                    decrypted_case = ["No solution."]
+                    break
+            if decrypted_case:
+                break
+            decrypted_case.append(''.join(decrypted_line))
+        results.append(decrypted_case if decrypted_case else ["No solution."])
 
     return results
-
-
-def read_test_cases(file_path):
-    cases = []
-    with open(file_path, 'r') as file:
-        current_case = []
-        for line in file:
-            line = line.strip()
-            if not line:
-                if current_case:
-                    cases.append(current_case)
-                    current_case = []
-            else:
-                current_case.append(line)
-        if current_case:
-            cases.append(current_case)
-    return cases
-
-
-def main():
-    # Указываем фиксированный путь к файлу с тестами
-    file_path = 'test_data.txt'
-    test_cases = read_test_cases(file_path)
-    results = decrypt_texts(test_cases)
-
-    for i, result in enumerate(results):
-        for line in result:
-            print(line)
-        if i < len(results) - 1:
-            print()  # Пустая строка между блоками
-
-
-if __name__ == "__main__":
-    main()

@@ -5,23 +5,23 @@ from Decoder import decrypt_texts
 def test_decrypt_texts():
     test_cases = [
         {
-            "input": ["gsv jfrxp ybgsrh", "nfyb qnweql"],
-            "expected": ["the quick brown", "fox jumps"]
-        },
-        {
-            "input": ["gsv xlwv rm", "nfgzi"],
-            "expected": ["the lazy dog", "quick"]
-        },
-        {
-            "input": ["zyxwvutsrqponmlkjihgfedcba", "abcdefghijklmno"],
-            "expected": ["the quick brown fox jumps", "over the lazy dog"]
-        },
-        {
-            "input": ["abcdefgh", "ijklmnop", "qrstuvwxyz"],
+            "input": [["gsv jfrxp ybgsrh", "nfyb qnweql"]],
             "expected": ["No solution."]
         },
         {
-            "input": ["the quick brown fox jumps over the lazy dog"],
+            "input": [["gsv xlwv rm", "nfgzi"]],
+            "expected": ["No solution."]
+        },
+        {
+            "input": [["zyxwvutsrqponmlkjihgfedcba", "abcdefghijklmno"]],
+            "expected": ["the quick brown fox jumps", "over the lazy dog"]
+        },
+        {
+            "input": [["abcdefgh", "ijklmnop", "qrstuvwxyz"]],
+            "expected": ["No solution."]
+        },
+        {
+            "input": [["the quick brown fox jumps over the lazy dog"]],
             "expected": ["the quick brown fox jumps over the lazy dog"]
         }
     ]
@@ -30,9 +30,8 @@ def test_decrypt_texts():
         result = decrypt_texts([test["input"]])
         assert result[0] == test["expected"], f"Test failed for input: {test['input']}"
 
-
 def test_decrypt_texts_from_file():
-    with open("test_data.txt", "r") as f:
+    with open("input.txt", "r") as f:
         lines = f.read().splitlines()
 
     num_cases = int(lines[0])
@@ -58,7 +57,6 @@ def test_decrypt_texts_from_file():
 
     for i, (result, expected) in enumerate(zip(results, expected_results)):
         assert result == expected, f"Test case {i + 1} failed: {result} != {expected}"
-
 
 if __name__ == "__main__":
     pytest.main()
