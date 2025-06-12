@@ -11,57 +11,47 @@ def decrypt_texts(cases):
         for line in current_case:
             cipher_words.extend(line.split())
 
-        # Попытка найти маппинг через перебор
-        mapping = {}
-        used_plain_letters = set()
-        used_cipher_letters = set()
+        mapping = None
 
-        def backtrack(i, temp_map, used_plain):
+        def backtrack(i, temp_map, used_plain, used_plain_letters, used_cipher_letters):
             if i == len(cipher_words):
                 return temp_map
-
             cipher_word = cipher_words[i]
             length = len(cipher_word)
-
             for plain_word in known_by_length.get(length, []):
                 if plain_word in used_plain:
                     continue
-
-                temp = {}
+                new_temp_map = temp_map.copy()
+                new_used_plain = used_plain.copy()
+                new_used_plain_letters = used_plain_letters.copy()
+                new_used_cipher_letters = used_cipher_letters.copy()
                 valid = True
                 for c, p in zip(cipher_word, plain_word):
-                    if c in temp_map:
-                        if temp_map[c] != p:
+                    if c in new_temp_map:
+                        if new_temp_map[c] != p:
                             valid = False
                             break
                     else:
-                        if p in used_plain_letters:
+                        if p in new_used_plain_letters or c in new_used_cipher_letters:
                             valid = False
                             break
-                        temp[c] = p
-
+                        new_temp_map[c] = p
+                        new_used_plain_letters.add(p)
+                        new_used_cipher_letters.add(c)
                 if valid:
-                    for c, p in zip(cipher_word, plain_word):
-                        temp_map[c] = p
-                        used_plain_letters.add(p)
-                        used_cipher_letters.add(c)
-                    used_plain.add(plain_word)
-                    result = backtrack(i + 1, temp_map, used_plain)
-                    if result:
+                    new_used_plain.add(plain_word)
+                    result = backtrack(i + 1, new_temp_map, new_used_plain, new_used_plain_letters, new_used_cipher_letters)
+                    if result is not None:
                         return result
-                    used_plain.remove(plain_word)
-                    for c in cipher_word:
-                        p = temp_map.pop(c)
-                        used_plain_letters.remove(p)
-                        used_cipher_letters.remove(c)
             return None
 
-        mapping = backtrack(0, {}, set())
+        mapping = backtrack(0, {}, set(), set(), set())
         if not mapping:
             results.append(["No solution."])
             continue
 
         decrypted_case = []
+        has_error = False
         for line in current_case:
             decrypted_line = []
             for char in line:
@@ -71,10 +61,14 @@ def decrypt_texts(cases):
                     decrypted_line.append(mapping[char])
                 else:
                     decrypted_case = ["No solution."]
+                    has_error = True
                     break
-            if decrypted_case:
+            if has_error:
                 break
             decrypted_case.append(''.join(decrypted_line))
-        results.append(decrypted_case if decrypted_case else ["No solution."])
+        if has_error:
+            results.append(["No solution."])
+        else:
+            results.append(decrypted_case)
 
     return results

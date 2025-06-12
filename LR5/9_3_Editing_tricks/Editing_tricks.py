@@ -39,7 +39,7 @@ def longest_edit_step_ladder(lexigraf):
     return max(dp)
 
 
-# Словарь уже вписан здесь - ИСПРАВЛЕНО
+# Словарь уже вписан здесь
 dictionary = ["cat", "dig", "dog", "fig", "fin", "fine", "fog", "log", "wine"]
 
 
